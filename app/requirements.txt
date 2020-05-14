@@ -1,0 +1,3 @@
+pyyaml
+Twisted
+git+https://github.com/iKonoTelecomunicaciones/starpy.git
