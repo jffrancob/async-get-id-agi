@@ -11,7 +11,7 @@ ADD app/ /usr/src/
 WORKDIR /usr/src/app
 
 # Dependencies install
-pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Inform Docker that the container is listening on the specified port at runtime.
 EXPOSE 4573
