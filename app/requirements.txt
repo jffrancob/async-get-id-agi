@@ -1,4 +1,5 @@
 pyyaml
 Twisted
+treq
 git+https://github.com/iKonoTelecomunicaciones/starpy.git
 
