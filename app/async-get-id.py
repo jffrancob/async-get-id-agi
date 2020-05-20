@@ -3,6 +3,7 @@ from twisted.internet import reactor
 from starpy import fastagi
 import logging
 import re
+import treq
 
 max_attemps = 2
 time_out = 2.500
@@ -13,7 +14,41 @@ sound_file = 'extensions'
 sound_no_id = 'invalid'
 sound_id_invalid = 'invalid'
 sound_try_again = 'pls-try-again'
+rurl = 'http://bus.comedal.com.co:8022/ws/ivr/datos-cedula?cedula={}'
+rtimeout = 2
+ruser = None
+rpassword = None
 
+config = """
+idn:
+    max_attemps: 2
+    time_out: 2.500
+    regexp: [1-9][0-9]{5,9}
+
+variables:
+    id: ID_NUMBER
+    status: ID_STATUS
+
+sounds:
+    enter_id: extensions
+    no_id: invalid
+    id_invalid: invalid
+    try_again: pls-try-again
+
+request:
+    url: http://bus.comedal.com.co:8022/ws/ivr/datos-cedula?cedula={}
+    timeout: 2
+    user: admin
+    password: password
+"""
+
+
+def load_config(config_file):
+    with open(config_file, 'r') as stream:
+        try:
+            return yaml.safe_load(config)
+        except yaml.YAMLError as exc:
+            print(exc)
 
 def get_module_logger(mod_name):
     """
@@ -28,7 +63,9 @@ def get_module_logger(mod_name):
     logger.setLevel(logging.DEBUG)
     return logger
 
+
 logger = get_module_logger("FastAGI")
+
 
 @inlineCallbacks
 def get_id(agi):
@@ -43,7 +80,9 @@ def get_id(agi):
                 yield agi.streamFile(sound_try_again)
 
             (digits, timeout) = yield agi.getData(sound_file, time_out)
-            logger.info("New DTMF input: {}, with timeout: {}".format(digits, timeout))
+            logger.info("New DTMF input: {}, with timeout: {}".format(
+                digits, timeout)
+            )
 
             if not digits:
                 logger.info("No digits has been entered")
@@ -60,6 +99,13 @@ def get_id(agi):
 
             else:
                 logger.info("The digits value is correct")
+
+                url = rurl.format(digits)
+                response = yield treq.post(url, persistent=True, rtimeout,
+                                           auth=(ruser, rpassword))
+
+                logger.info(response)
+
                 status = 'OK'
                 break
 
