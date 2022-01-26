@@ -1,24 +1,21 @@
-# Use the official image as a parent image.
-FROM python:3.8.2-alpine
-#FROM python:2.7
+# Building stage
+FROM python:3.5
 
-# Git package install
-RUN apk add git gcc musl-dev
+# copy the dependencies file to the working directory
+COPY requirements.txt .
 
-# Copy the file from your host to your current location.
-COPY app /usr/src/app
+# install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set the working directory.
-WORKDIR /usr/src/app
+RUN mkdir -p /etc/getid/
+COPY ./config.yaml /etc/getid/config.yaml
 
-# pip update
-RUN pip install --upgrade pip
+# set the working directory in the container
+WORKDIR /app
 
-# Dependencies install
-RUN pip install -r requirements.txt
+# copy the content of the local src directory to the working directory
+COPY ./src/ .
 
-# Inform Docker that the container is listening on the specified port at runtime.
-EXPOSE 4573
-
-# Run the application
-CMD [ "python", "async-get-id.py" ]
+# command to run on container start
+#CMD [ "python", "./server.py" ]
+ENTRYPOINT python server.py
