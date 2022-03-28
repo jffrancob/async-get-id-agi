@@ -1,0 +1,43 @@
+idn:
+    max_attemps: 3
+    time_out: 2500
+    regexp: "[1-9][0-9]{5,10}"
+    field: "document"
+
+sounds:
+    enter_id: 
+        # Por favor ingrese el documento seguido de la tecla numeral
+        prompt: "custom/id-please-type"
+        # No he recibido su respuesta
+        empty: "custom/id-you-have-not-entered"
+        # El número de documento ingresado no es válido
+        invalid: "custom/id-invalid"
+        # El número de documento ingresado es...
+        number-is: "custom/id-number-is"
+        # Si es correcto marque 1, de lo contrario marque 0
+        confirm: "custom/id-number-confirm"
+        # Vamos a intentarlo de nuevo
+        repeat: "custom/id-repeat"
+        # Por favor intente de nuevo
+        try-again: "custom/try-again"
+    choose-option:
+        # No ha digitado ninguna opción
+        empty: "custom/option-empty"
+        # La opción ingresada es incorrecta
+        invalid: "custom/option-invalid"
+        # Por favor intente de nuevo
+        try-again: "custom/try-again"
+
+request:
+    url: "http://localhost:8080/api/get-info"
+    auth: 
+        login: null
+        password: null
+    timeout: 5
+
+variables:
+    ID_NUMBER: "{document}"
+    EXTRA1: "{name}"
+
+status:
+    variable: "ID_STATUS"

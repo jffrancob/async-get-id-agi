@@ -1,5 +1,5 @@
 # Building stage
-FROM python:3.5
+FROM python:3.7
 
 # copy the dependencies file to the working directory
 COPY requirements.txt .
@@ -8,7 +8,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p /etc/getid/
-COPY ./config.yaml /etc/getid/config.yaml
 
 # set the working directory in the container
 WORKDIR /app
