@@ -1,5 +1,5 @@
 # Building stage
-FROM python:3.5
+FROM python:3.7-stretch
 
 # copy the dependencies file to the working directory
 COPY requirements.txt .

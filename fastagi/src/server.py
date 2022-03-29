@@ -47,6 +47,8 @@ class GetIDView(AGIView):
         self.user = {}
         self.status = None
 
+        logger.info(f"{self.config}")
+
         if not self.http_client:
             self.http_client = aiohttp.ClientSession()
 
@@ -73,8 +75,8 @@ class GetIDView(AGIView):
                                                    )
             id_field = self.config["idn"]["field"]
             self.user[id_field] = id_number
-            logger.info("ID Number: %s" % id_number)
-            logger.info('Request: %s' % self.config["request"])
+            logger.info(f"ID Number: {id_number}")
+            logger.info(f'Request: {self.config["request"]}')
 
             http_request = self.config["request"]["url"]
             if http_request and id_number:
@@ -86,8 +88,8 @@ class GetIDView(AGIView):
             else:
                 user_info = {}
 
-            logger.info("User: %s" % self.user)
-            logger.info("ID Number: %s" % user_info)
+            logger.info(f"User: {self.user}")
+            logger.info(f"ID Number: {user_info}")
             if user_info:
                 self.user.update(user_info)
 
@@ -98,7 +100,7 @@ class GetIDView(AGIView):
         await self.set_custom_vars()
 
     async def choose_option(self, audioPrompt, optionList=['1', '2', '*'], tries=3):
-        logger.info("Starting choose_option with %s" % audioPrompt)
+        logger.info(f"Starting choose_option with {audioPrompt}")
         sounds = self.config["sounds"]["choose-option"]
         attemps = 0
         while not tries or attemps < tries:
@@ -122,7 +124,7 @@ class GetIDView(AGIView):
 
     async def get_information(self, regExp, sounds, func_slide=None, tries=3,
                               confirm=3, timeout=2500, max_digits=255, cancel=None,
-                              optionList=["1", "0", "*"]):
+                              optionList=["1", "2", "*"]):
         attemps = 0
         try_again = False
         while tries is None or attemps < tries:
@@ -196,7 +198,7 @@ class GetIDView(AGIView):
         if timeout:
             timeout = aiohttp.ClientTimeout(total=timeout)
 
-        logger.debug("%s, %s" % (url, params))
+        logger.debug(f"{url}, {params}")
         async with self.http_client.request(method, url,
                                             auth=auth,
                                             params=params,
@@ -204,17 +206,17 @@ class GetIDView(AGIView):
                                             headers=headers,
                                             timeout=timeout
                                             ) as resp:
-            logger.debug("Response: %s" % resp)
+            logger.debug(f"Response: {resp}")
             if json_result:
                 try:
                     response = await resp.json(content_type=None)
                 except Exception as error:
-                    logger.error("Something failed trying to convert result into json: %s" % error)
+                    logger.error(f"Something failed trying to convert result into json: {error}")
                     response = await resp.text()
             else:
                 response = await resp.text()
 
-            logger.info("Response: %s" % response)
+            logger.info(f"Response: {response}")
 
             return response
 
@@ -236,7 +238,7 @@ class GetIDView(AGIView):
         for var, value in vars_dict.items():
             if type(value) is str:
                 value = fmt.format(value, **self.user)
-            logger.info("Setting '%s' to '%s'" % (var, value))
+            logger.info(f"Setting '{var}' to '{value}'")
             await self.agi.set_variable(var, value)
 
 
