@@ -69,7 +69,7 @@ class GetIDView(AGIView):
                                                    self.config["sounds"]["enter_id"],
                                                    func_slide=True,
                                                    tries=2,
-                                                   optionList=["1", "0"]
+                                                   optionList=["1", "2"]
                                                    )
             id_field = self.config["idn"]["field"]
             self.user[id_field] = id_number
