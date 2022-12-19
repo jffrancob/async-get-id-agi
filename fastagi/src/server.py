@@ -11,6 +11,7 @@ from aioagi.log import agi_server_logger as logger
 from aioagi.urldispathcer import AGIView
 
 from logger import LOGGING
+from slider import Slider
 
 
 class PartialFormatter(string.Formatter):
@@ -37,7 +38,7 @@ class PartialFormatter(string.Formatter):
                 raise
 
 
-class GetIDView(AGIView):
+class GetIDView(AGIView, Slider):
     http_client = None
 
     with open("/etc/config.yaml") as stream:
@@ -67,11 +68,12 @@ class GetIDView(AGIView):
         await self.agi.answer()
         try:
             # await self.get_id()
+            logger.info(f"Getting ID {self.config}")
             id_number = await self.get_information(self.config["idn"]["regexp"],
                                                    self.config["sounds"]["enter_id"],
-                                                   func_slide=True,
-                                                   tries=2,
-                                                   optionList=["1", "2"]
+                                                   func_slide=self.config["idn"]["slider"],
+                                                   tries=self.config["idn"]["max_attemps"],
+                                                   optionList=["1", "0"]
                                                    )
             id_field = self.config["idn"]["field"]
             self.user[id_field] = id_number
@@ -96,7 +98,7 @@ class GetIDView(AGIView):
         except Exception as error:
             logger.info(error)
             self.status = 'ERROR'
-        # await self.set_vars()
+
         await self.set_custom_vars()
 
     async def choose_option(self, audioPrompt, optionList=['1', '2', '*'], tries=3):
@@ -118,7 +120,6 @@ class GetIDView(AGIView):
                     await self.agi.stream_file(sounds["try-again"])
             else:
                 event, info = ("TIMEOUT", "NONE") if result == 'T' else ("OPTION", result)
-                # await self.log_ivr_try(event, info)
                 return result
         return None
 
@@ -145,12 +146,12 @@ class GetIDView(AGIView):
                     await self.agi.stream_file(sounds.get("invalid"))
                 try_again = True
             else:
-                # await self.log_ivr_try("EXPRESSION", result)
                 if func_slide:
                     await self.agi.stream_file(sounds.get("number-is"))
-                    await self.agi.say_digits(result)
-                    # for slide in func_slide(result):
-                    #     await self.agi.stream_file(slide)
+                    digits_dir = self.config["sounds"]["digits"]
+                    func = getattr(self, func_slide)
+                    for slide in func(result):
+                        await self.agi.stream_file(f"{digits_dir}/{slide}")
                     choice = await self.choose_option(sounds.get("confirm"),
                                                       optionList, tries=confirm)
                     if not choice and (tries is None or attemps < tries):
@@ -161,31 +162,6 @@ class GetIDView(AGIView):
                 else:
                     return result
         return None
-
-    async def get_id(self):
-
-        for attemp in range(self.config["idn"]["max_attemps"]):
-            if attemp != 0:
-                await self.agi.stream_file(self.config["sounds"]["try_again"])
-
-            data_result = await self.agi.get_data(self.config["sounds"]["enter_id"], self.config["idn"]["time_out"])
-            id_number, timeout = data_result.result, data_result.info == "(timeout)"
-
-            if not id_number:
-                logger.info("No id_number has been entered")
-                self.status = 'EMPTY' if not timeout else 'TIMEOUT'
-                await self.agi.stream_file(self.config["sounds"]["no_id"])
-
-            elif not re.search(self.config["idn"]["regexp"], id_number):
-                logger.info("The input doesn't match the regular expression")
-                self.status = 'WRONG'
-                await self.agi.stream_file(self.config["sounds"]["id_invalid"])
-
-            else:
-                logger.info("The id_number value is correct")
-                self.user[self.config["idn"]["field"]] = id_number
-                self.status = 'OK'
-                break
 
     async def http_request(self, url, method="GET", params=None, auth_data=None,
                            json_data=None, headers=None, json_result=True, timeout=5):
@@ -220,18 +196,6 @@ class GetIDView(AGIView):
 
             return response
 
-    async def set_vars(self):
-        await self.agi.set_variable(self.config["status"]["variable"], self.status)
-
-        vars_dict = self.config["variables"]
-        for var, value in vars_dict.items():
-            try:
-                if type(value) is str:
-                    value = value.format(**self.user)
-                await self.agi.set_variable(var, value)
-            except Exception as error:
-                logger.warning("It's not posible to set ({var}, {value}): {error}".format(**locals()))
-
     async def set_custom_vars(self):
         fmt = PartialFormatter()
         vars_dict = self.config["variables"]
@@ -245,5 +209,5 @@ class GetIDView(AGIView):
 if __name__ == '__main__':
     logging.config.dictConfig(LOGGING)
     app = AGIApplication()
-    app.router.add_route('*', '/hello-view/', GetIDView)
+    app.router.add_route('*', '', GetIDView)
     runner.run_app(app)
