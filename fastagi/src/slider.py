@@ -1,7 +1,7 @@
 class Slider():
 
     def digits(self, number):
-        return [x for x in id_number]
+        return [x for x in number]
 
     def id(self, id_number):
         if len(id_number) == 8:
